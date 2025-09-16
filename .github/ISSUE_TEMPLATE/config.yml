@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Self-Service Support Kiosk
+    url: https://semmelbrot12.github.io/MCxDiscord/
+    about: Please try solving your issue here before making a new issue report.
+  - name: GitHub Security Bug Bounty
+    url: mailto:semmelbrot12@breadzonemc.net
+    about: Please report security vulnerabilities here.
+  - name: Community Support (Discord Server)
+    url: https://discord.gg/Bapv9HfzaX
+    about: If you see a big pile of open issues, then consider community support. Worst case, they''ll redirect you to me.
