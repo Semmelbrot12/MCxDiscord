@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MC×Discord Diagnostic Kiosk</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 2rem; }
+  .kiosk { max-width: 700px; margin: auto; background: #fff; padding: 2rem; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+  h1 { text-align: center; }
+  textarea { width: 100%; height: 150px; margin-top: 0.5rem; font-family: monospace; }
+  button { margin-top: 1rem; padding: 0.75rem 1rem; font-size: 1rem; cursor: pointer; }
+  pre { background: #eee; padding: 1rem; white-space: pre-wrap; word-wrap: break-word; }
+</style>
+</head>
+<body>
+<div class="kiosk">
+  <h1>MC×Discord Diagnostic Kiosk</h1>
+  <div id="content">
+    <p>Welcome! This kiosk will help diagnose common Discord bot issues.</p>
+    <button onclick="showFileInput()">Start Diagnostics</button>
+  </div>
+</div>
+
+<script>
+function showFileInput() {
+  const html = `
+    <h2>Step 1: Paste your server.properties</h2>
+    <textarea id="serverProps" placeholder="Paste server.properties here"></textarea>
+    <h2>Step 2: Paste your MC×Discord config</h2>
+    <textarea id="mcxConfig" placeholder="Paste MC×Discord config here (only webhook, port, token fields are needed)"></textarea>
+    <button onclick="runDiagnostics()">Run Diagnostics</button>
+  `;
+  document.getElementById('content').innerHTML = html;
+}
+
+function runDiagnostics() {
+  const serverText = document.getElementById('serverProps').value;
+  const mcxText = document.getElementById('mcxConfig').value;
+
+  if (!serverText || !mcxText) {
+    alert("Please provide both files.");
+    return;
+  }
+
+  // Parse server.properties for port
+  let serverPort = null;
+  serverText.split('\n').forEach(line => {
+    line = line.trim();
+    if (line.startsWith('#') || line === '') return;
+    const [key, value] = line.split('=');
+    if (key.trim() === 'server-port') serverPort = parseInt(value.trim());
+  });
+
+  // Parse MC×Discord config
+  let mcxConfig = { webhook: null, port: null, token: null };
+  mcxText.split('\n').forEach(line => {
+    line = line.trim();
+    if (line.startsWith('#') || line === '') return;
+    const [key, value] = line.split(':');
+    if (!key || !value) return;
+    const k = key.trim();
+    const v = value.trim().replace(/^"|"$/g, ''); // remove quotes
+    if (k in mcxConfig) mcxConfig[k] = v;
+  });
+
+  // Validate config
+  const errors = [];
+  if (!mcxConfig.webhook) errors.push("Webhook field is empty or missing.");
+  if (!mcxConfig.port) errors.push("Port field is empty or missing.");
+  if (!mcxConfig.token) errors.push("Token field is empty or missing.");
+
+  // Check port conflict
+if (serverPort && mcxConfig.port && parseInt(mcxConfig.port) === serverPort) {
+  errors.push(`Port conflict detected! server-port (${serverPort}) matches MC×Discord port.<br>
+MC×Discord requires its own port. You can view an explanation <a href="https://chatgpt.com/share/68c9ca38-1d8c-800d-8617-c44d035bdb76" target="_blank">here</a>.`);
+}
+
+  // Build result output
+  let resultHtml = '<h2>Diagnostics Result</h2>';
+  if (errors.length === 0) {
+    resultHtml += `<p>✅ All basic checks passed.</p>
+                   <p>If messages are still not showing, make sure your plugin is up-to-date or visit the <a href="https://github.com/MCxDiscord/MCxDiscord/issues" target="_blank">issues page</a>.</p>`;
+  } else {
+    resultHtml += '<p>⚠️ Issues found:</p><ul>';
+    errors.forEach(e => resultHtml += `<li>${e}</li>`);
+    resultHtml += '</ul>';
+    resultHtml += `<p>Please correct the above issues. If you need further help, contact support.</p>`;
+  }
+
+  resultHtml += '<button onclick="showFileInput()">Run Again</button>';
+  document.getElementById('content').innerHTML = resultHtml;
+}
+</script>
+</body>
+</html>
